@@ -2,20 +2,21 @@ FROM alpine:latest
 MAINTAINER Andreas Wölfl andreas.woelfl84@gmail.com
 
 # environment variables
-ENV PLATFORM_ARCH="amd64"
+ENV PLATFORM_ARCH="x86_64"
 ENV ENCFS6_CONFIG="/config/encfs.xml"
 
-# install packages
-RUN apk add --no-cache curl tar wget encfs
 
-# install s6 overlay
-RUN \
-  OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" | awk '/tag_name/{print $4;exit}' FS='[""]') && \
-  curl -o /tmp/s6-overlay.tar.gz -L "https://github.com/just-containers/s6-overlay/releases/download/${OVERLAY_VERSION}/s6-overlay-${PLATFORM_ARCH}.tar.gz" && \
-  tar xfz /tmp/s6-overlay.tar.gz -C /
+# install packages
+RUN apk add --no-cache curl tar wget encfs xz
+
+ARG S6_OVERLAY_VERSION=3.1.2.1
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 # remove packages
-RUN apk del curl tar wget
+RUN apk del curl tar wget xz
 
 # create dirs
 RUN mkdir -p /src /dest /config
